@@ -1,12 +1,35 @@
-import { Github, FileVideo, Upload, Wand2 } from "lucide-react";
+import { Github } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Separator } from "./components/ui/separator";
 import { Textarea } from "./components/ui/textarea";
-import { Label } from "./components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
-import { Slider } from "./components/ui/slider";
+import VideoInputForm from "./components/VideoInputForm";
+import PromptForm from "./components/PromptForm";
+import { useState, useEffect } from "react";
+import { useCompletion } from "ai/react";
 
 function App() {
+  const [videoId, setVideoId] = useState("");
+  const [temperature, setTemperature] = useState(0.5);
+  const {
+    input,
+    isLoading,
+    completion,
+    setInput,
+    handleSubmit,
+    handleInputChange
+  } = useCompletion({
+    api: 'http://localhost:3333/ai/completion',
+    body: {
+      videoId,
+      temperature
+    },
+    headers: {
+      'Content-type': 'Application/json'
+    }
+  });
+
+  useEffect(() => console.log(videoId), [videoId])
+
   return (
     <div className="max-h-screen flex flex-col">
       <div className="px-6 py-3 flex items-center justify-between border-b">
@@ -28,11 +51,14 @@ function App() {
         <section className="flex flex-col flex-1 gap-4">
           <div className="grid grid-rows-2 gap-4 flex-1">
             <Textarea
+              value={input}
+              onChange={handleInputChange}
               placeholder="Inclua o prompt para a ia"
               className="resize-none p-5 leading-relaxed"
             />
             <Textarea
               readOnly
+              value={completion}
               className="resize-none p-5 leading-relaxed"
               placeholder="Resultado gerado pela ia"
             />
@@ -44,88 +70,19 @@ function App() {
         </section>
 
         <aside className="w-80 bg-black space-y-6 p-3">
-          <form className="space-y-6">
-            <label
-              htmlFor="video"
-              className="border w-full flex rounded-md aspect-video cursor-pointer border-dashed text-sm flex-col gap-2 items-center justify-center text-muted-foreground hover:bg-primary/5"
-            >
-              <FileVideo className="w-4 h-4" />
-              Selecione um vídeo
-            </label>
-            <input type="file" id="video" accept="video/mp4" className="sr-only"/>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <Label htmlFor="transcription-prompt">Prompt de transcrição</Label>
-              <Textarea
-                id="transcription-prompt"
-                className="h-20 leading-relaxed"
-                placeholder="Inclua palavras chave mencionadas no vídeo separadas por vírgula (,)"
-              />
-            </div>
-
-            <Button className="w-full" type="submit">
-              Carregar vídeo
-              <Upload className="w-4 h-4 ml-2" />
-            </Button>
-          </form>
+          <VideoInputForm
+            setVideoId={setVideoId}
+          />
 
           <Separator />
 
-          <form className="space-y-6">
-            <div className="space-y-2">
-              <Label>Prompt</Label>
-
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selcione um prompt"/>
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="title">Título do YouTube</SelectItem>
-                  <SelectItem value="description">Descrição od YouTube</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Modelo</Label>
-
-              <Select disabled defaultValue="gpt3.5">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="gpt3.5">GPT 3.5-turbo 16k</SelectItem>
-                </SelectContent>
-
-                <span className="block text-xs text-muted-foreground italic">Você poderá customizar essa opção em breve</span>
-              </Select>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <Label>Temperatura</Label>
-
-              <Slider
-                min={0}
-                max={1}
-                step={.1}
-                defaultValue={[0.5]}
-              />
-              <span className="block text-xs text-muted-foreground italic">Valores nais auto tendem a deixar o resultado mais criativo, mas com possíveis erros</span>
-            </div>
-
-            <Separator />
-
-            <Button type="submit" className="w-full">
-              Executar
-              <Wand2 className="w-4 h-4 ml-2"/>
-            </Button>
-          </form>
+          <PromptForm
+            isLoading={isLoading}
+            temperature={temperature}
+            handleSubmit={handleSubmit}
+            setTemperature={setTemperature}
+            handlePromptSelected={setInput}
+          />
 
         </aside>
       </main>
